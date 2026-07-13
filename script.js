@@ -10,7 +10,7 @@ empresa:document.getElementById("empresa").value,
 sala:document.getElementById("sala").value,
 tipo:document.getElementById("tipo").value,
 motivo:document.getElementById("motivo").value,
-assinatura:"",
+assinatura:canvas.toDataURL("image/png"),
 latitude:"",
 longitude:"",
 dispositivo:navigator.userAgent
@@ -29,18 +29,31 @@ body:JSON.stringify(dados)
 
 });
 
-console.log("Status:", resposta.status);
+const retorno = await resposta.json();
 
-const texto = await resposta.text();
+if(retorno.sucesso){
 
-console.log("Resposta:", texto);
+alert("Registro salvo com sucesso!");
 
-alert(texto);
+document.getElementById("nome").value="";
+document.getElementById("matricula").value="";
+document.getElementById("empresa").value="";
+document.getElementById("motivo").value="";
+
+document.getElementById("sala").selectedIndex=0;
+document.getElementById("tipo").selectedIndex=0;
+
+limparAssinatura();
+
+}else{
+
+alert(retorno.erro);
+
+}
 
 }catch(erro){
 
 console.error(erro);
-
 alert(erro);
 
 }
