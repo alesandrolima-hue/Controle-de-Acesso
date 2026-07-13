@@ -1,55 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Teste API</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Controle de Acesso</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
-<h2>Teste API</h2>
+<div class="container">
 
-<button onclick="enviar()">Enviar</button>
+<h1>Controle de Acesso</h1>
 
-<script>
+<label>Nome</label>
+<input id="nome" type="text">
 
-async function enviar(){
+<label>Matrícula</label>
+<input id="matricula" type="text">
 
-const resposta = await fetch("https://script.google.com/macros/s/AKfycbzgQiAwIv_Yd4i5HO1vD81XfFeRcmuxLQoVhlLoK9Ygdz0mwMay6C8YTi3pDX72so9w7w/exec",{
+<label>Empresa</label>
+<input id="empresa" type="text">
 
-method:"POST",
+<label>Sala</label>
 
-headers:{
-"Content-Type":"text/plain;charset=utf-8"
-},
+<select id="sala">
 
-body:JSON.stringify({
+<option value="">Selecione</option>
 
-nome:"Alesandro Lima",
+<option>11B2</option>
+<option>13B2</option>
+<option>15B2</option>
+<option>17B2</option>
+<option>19B2</option>
 
-matricula:"12345",
+</select>
 
-empresa:"PD7",
+<label>Tipo</label>
 
-sala:"Sala 101",
+<select id="tipo">
 
-tipo:"Entrada",
+<option>Entrada</option>
 
-motivo:"Teste",
+<option>Saída</option>
 
-assinatura:"Sem assinatura"
+</select>
 
-})
+<label>Motivo</label>
 
-});
+<textarea id="motivo"></textarea>
 
-const texto = await resposta.text();
+<button onclick="enviar()">
 
-alert(texto);
+Enviar
 
-}
+</button>
 
-</script>
+</div>
+
+<script src="script.js"></script>
 
 </body>
 
