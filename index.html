@@ -55,6 +55,23 @@
 
 <textarea id="motivo"></textarea>
 
+<label>Foto do Ambiente</label>
+
+<input
+    type="file"
+    id="foto"
+    accept="image/*"
+    capture="environment">
+
+<br><br>
+
+<img
+    id="previewFoto"
+    style="display:none;
+           max-width:100%;
+           border-radius:8px;
+           border:1px solid #ccc;">  
+  
 <label>Assinatura</label>
 
 <canvas id="assinatura" width="450" height="180"></canvas>
