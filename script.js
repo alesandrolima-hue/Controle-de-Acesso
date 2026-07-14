@@ -103,7 +103,11 @@ empresa:document.getElementById("empresa").value,
 sala:document.getElementById("sala").value,
 tipo:document.getElementById("tipo").value,
 motivo:document.getElementById("motivo").value,
+
 assinatura:assinatura,
+
+foto:fotoBase64,
+
 latitude:"",
 longitude:"",
 dispositivo:navigator.userAgent
@@ -150,5 +154,35 @@ console.error(erro);
 alert("Erro: " + erro);
 
 }
+
+}
+let fotoBase64 = "";
+
+document
+.getElementById("foto")
+.addEventListener("change", carregarFoto);
+
+function carregarFoto(event){
+
+    const arquivo = event.target.files[0];
+
+    if(!arquivo) return;
+
+    const leitor = new FileReader();
+
+    leitor.onload=function(e){
+
+        fotoBase64 = e.target.result;
+
+        const preview =
+        document.getElementById("previewFoto");
+
+        preview.src = fotoBase64;
+
+        preview.style.display="block";
+
+    };
+
+    leitor.readAsDataURL(arquivo);
 
 }
