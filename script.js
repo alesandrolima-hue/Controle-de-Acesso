@@ -1,5 +1,5 @@
 // URL da sua API do Google Apps Script
-const URL_API = "https://script.google.com/macros/s/AKfycbwOZpVR6o2BdofnJxTOT1ivKb0VR7xGjsRm2Zr-cm7fc03QT8qBLvGM2i8sQFCbAymDTg/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycby5qdU7R99OSDIzkeh30juFI87o5QZkOGepmJGPE0sxCN2XjdI4JAaCsyHytAOG-KjNRw/exec";
 
 // Variáveis para as assinaturas
 let canvasResp, canvasRespCtx;
