@@ -107,60 +107,44 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// Variável global para armazenar a foto com segurança
+// Variável global garantida
 window.fotoBase64 = "";
 
-// === FOTO: MINIATURA INSTANTÂNEA E COMPRESSÃO EM SEGUNDO PLANO ===
+// === FOTO: SOLUÇÃO FINAL (LEITURA DIRETA SEM COMPRESSÃO) ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
-    btn.innerText = "Preparando...";
+    btn.innerText = "Carregando foto...";
 
-    // 1. MINIATURA INSTANTÂNEA: Mostra a foto na tela em milissegundos!
-    const preview = document.getElementById("previewFoto");
-    const objectUrl = URL.createObjectURL(arquivo);
-    preview.src = objectUrl;
-    preview.style.display = "block";
+    const leitor = new FileReader();
 
-    // 2. COMPRESSÃO SILENCIOSA
-    const img = new Image();
-    img.onload = function() {
-        try {
-            const canvas = document.createElement("canvas");
-            
-            // Reduzido para 800px. Garante que o Google Drive salve instantaneamente!
-            const MAX_WIDTH = 800; 
-            let scaleSize = 1;
-            
-            if (img.width > MAX_WIDTH) {
-                scaleSize = MAX_WIDTH / img.width;
-            }
-            
-            canvas.width = img.width * scaleSize;
-            canvas.height = img.height * scaleSize;
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            // Comprime agressivamente para JPEG com 50% de qualidade
-            window.fotoBase64 = canvas.toDataURL("image/jpeg", 0.5);
-
-        } catch (erro) {
-            console.error("Erro ao comprimir", erro);
-            alert("Aviso: A foto está pesada demais para este aparelho.");
-        } finally {
-            // Libera o botão rapidinho
-            btn.disabled = false;
-            btn.innerText = "Enviar Registro";
-        }
+    // Quando o celular terminar de ler o arquivo físico...
+    leitor.onload = function(e) {
+        // 1. Pega a foto pura e original imediatamente
+        window.fotoBase64 = e.target.result;
+        
+        // 2. Mostra a miniatura na tela
+        const preview = document.getElementById("previewFoto");
+        preview.src = window.fotoBase64;
+        preview.style.display = "block";
+        
+        // 3. Libera o botão de envio na hora
+        btn.disabled = false;
+        btn.innerText = "Enviar Registro";
     };
 
-    img.src = objectUrl;
-});
+    leitor.onerror = function() {
+        alert("Erro no navegador ao tentar ler a foto.");
+        btn.disabled = false;
+        btn.innerText = "Enviar Registro";
+    };
 
+    // Inicia a leitura do arquivo
+    leitor.readAsDataURL(arquivo);
+});
 // === ENVIAR DADOS ===
 async function enviar() {
     // Nova trava com mensagem mais clara lendo a variável global
