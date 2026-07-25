@@ -177,9 +177,13 @@ document.getElementById("foto").addEventListener("change", function(event) {
 });
 // === ENVIAR DADOS ===
 async function enviar() {
-    // Adicione esta linha de bloqueio:
-    if (fotoBase64 === "") { alert("Por favor, tire a foto do ambiente antes de enviar!"); return; }
-        const btn = document.getElementById("btnEnviar");
+    // Nova validação lendo a variável global
+    if (!window.fotoBase64 || window.fotoBase64 === "") { 
+        alert("Por favor, tire a foto do ambiente antes de enviar!"); 
+        return; 
+    }
+    
+    const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
     btn.innerText = "Enviando... Aguarde";
 
@@ -213,13 +217,14 @@ async function enviar() {
             tipo: document.getElementById("tipo").value,
             motivo: document.getElementById("motivo").value,
 
-            foto: fotoBase64,
+            foto: window.fotoBase64, // Mudou aqui também para pegar a global!
             assinatura_responsavel: assRespBase64,
             assinatura_solicitante: assSolBase64,
             
             dispositivo: navigator.userAgent
         };
 
+        // ... resto do seu código fetch(URL_API) que já está funcionando ...
         const resposta = await fetch(URL_API, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
