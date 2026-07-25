@@ -1,57 +1,124 @@
-body{
-
-background:#f5f5f5;
-
-font-family:Arial;
-
-margin:0;
-
+body {
+    background: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 10px;
 }
 
-.container{
-
-max-width:500px;
-
-margin:auto;
-
-padding:20px;
-
-background:white;
-
-margin-top:30px;
-
-border-radius:10px;
-
-box-shadow:0 0 10px rgba(0,0,0,.2);
-
+.container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-h1{
-
-text-align:center;
-
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
 }
 
-input,select,textarea{
-
-width:100%;
-
-padding:10px;
-
-margin-bottom:15px;
-
-box-sizing:border-box;
-
+fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: #fff;
 }
 
-button{
+legend {
+    font-weight: bold;
+    color: #0056b3;
+    padding: 0 5px;
+}
 
-width:100%;
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    margin-top: 10px;
+    color: #444;
+    font-size: 14px;
+}
 
-padding:15px;
+input[type="text"], input[type="date"], input[type="time"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
 
-font-size:18px;
+.row {
+    display: flex;
+    gap: 10px;
+}
 
-cursor:pointer;
+.col {
+    flex: 1;
+}
 
+.checkbox-group {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #fafafa;
+}
+
+.checkbox-group label {
+    font-weight: normal;
+    margin-top: 0;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+canvas {
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    background: #f9f9f9;
+    width: 100%;
+    touch-action: none; /* Evita que a tela role enquanto assina no celular */
+}
+
+.btn-limpar {
+    width: 100%;
+    padding: 8px;
+    background: #e0e0e0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #333;
+}
+
+.btn-enviar {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-enviar:hover {
+    background: #218838;
+}
+
+.btn-enviar:disabled {
+    background: #88cfa5;
+    cursor: not-allowed;
 }
