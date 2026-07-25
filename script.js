@@ -1,188 +1,170 @@
-// ==========================
-// CONTROLE DE ACESSO - SCRIPT
-// ==========================
+// URL da sua API do Google Apps Script
+const URL_API = "COLOQUE_AQUI_A_SUA_URL_DO_APPS_SCRIPT";
 
-// URL do Apps Script
-const URL_API = "https://script.google.com/macros/s/AKfycbzgQiAwIv_Yd4i5HO1vD81XfFeRcmuxLQoVhlLoK9Ygdz0mwMay6C8YTi3pDX72so9w7w/exec";
+// Variáveis para as assinaturas
+let canvasResp, canvasRespCtx;
+let canvasSol, canvasSolCtx;
+let fotoBase64 = "";
 
-// Canvas
-let canvas;
-let ctx;
-let desenhando = false;
-
-// Inicializa a página
 window.onload = function () {
+    // 1. Gerar Número de Controle, Data e Hora
+    gerarDadosControle();
 
-    canvas = document.getElementById("assinatura");
-    ctx = canvas.getContext("2d");
+    // 2. Configurar os dois Canvas de Assinatura
+    const setupResp = setupCanvas("assinatura_responsavel");
+    canvasResp = setupResp.canvas;
+    canvasRespCtx = setupResp.ctx;
+
+    const setupSol = setupCanvas("assinatura_solicitante");
+    canvasSol = setupSol.canvas;
+    canvasSolCtx = setupSol.ctx;
+};
+
+function gerarDadosControle() {
+    const agora = new Date();
+    
+    // Formatar Data (YYYY-MM-DD) e Hora (HH:MM) para os inputs readonly
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    const dia = String(agora.getDate()).padStart(2, '0');
+    const hora = String(agora.getHours()).padStart(2, '0');
+    const minuto = String(agora.getMinutes()).padStart(2, '0');
+    const segundo = String(agora.getSeconds()).padStart(2, '0');
+
+    document.getElementById("data_atual").value = `${ano}-${mes}-${dia}`;
+    document.getElementById("hora_atual").value = `${hora}:${minuto}`;
+
+    // Gerar Número de Controle (Ex: AC-20231025-143022)
+    document.getElementById("num_controle").value = `AC-${ano}${mes}${dia}-${hora}${minuto}${segundo}`;
+}
+
+// === FUNÇÃO REUTILIZÁVEL PARA CANVAS ===
+function setupCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
+    let desenhando = false;
 
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.strokeStyle = "#000000";
 
-    // Mouse
-    canvas.addEventListener("mousedown", iniciarDesenho);
-    canvas.addEventListener("mousemove", desenhar);
-    canvas.addEventListener("mouseup", pararDesenho);
-    canvas.addEventListener("mouseleave", pararDesenho);
+    function getPosicao(e) {
+        const rect = canvas.getBoundingClientRect();
+        // Escala caso o CSS redimensione o canvas
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-    // Celular
-    canvas.addEventListener("touchstart", iniciarDesenho);
-    canvas.addEventListener("touchmove", desenhar);
-    canvas.addEventListener("touchend", pararDesenho);
-};
-
-function getPosicao(e){
-
-    const rect = canvas.getBoundingClientRect();
-
-    if(e.touches){
-
-        return{
-            x:e.touches[0].clientX-rect.left,
-            y:e.touches[0].clientY-rect.top
+        if (e.touches) {
+            return {
+                x: (e.touches[0].clientX - rect.left) * scaleX,
+                y: (e.touches[0].clientY - rect.top) * scaleY
+            };
+        }
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
         };
-
     }
 
-    return{
-        x:e.offsetX,
-        y:e.offsetY
+    const iniciar = (e) => { desenhando = true; const p = getPosicao(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+    const desenhar = (e) => { if (!desenhando) return; const p = getPosicao(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+    const parar = () => { desenhando = false; };
+
+    canvas.addEventListener("mousedown", iniciar);
+    canvas.addEventListener("mousemove", desenhar);
+    canvas.addEventListener("mouseup", parar);
+    canvas.addEventListener("mouseleave", parar);
+    canvas.addEventListener("touchstart", iniciar, {passive: false});
+    canvas.addEventListener("touchmove", desenhar, {passive: false});
+    canvas.addEventListener("touchend", parar);
+
+    return { canvas, ctx };
+}
+
+function limparCanvas(ctx, canvas) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// === FOTO ===
+document.getElementById("foto").addEventListener("change", function(event) {
+    const arquivo = event.target.files[0];
+    if (!arquivo) return;
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        fotoBase64 = e.target.result;
+        const preview = document.getElementById("previewFoto");
+        preview.src = fotoBase64;
+        preview.style.display = "block";
     };
-
-}
-
-function iniciarDesenho(e){
-
-    desenhando = true;
-
-    const p = getPosicao(e);
-
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y);
-
-}
-
-function desenhar(e){
-
-    if(!desenhando) return;
-
-    e.preventDefault();
-
-    const p = getPosicao(e);
-
-    ctx.lineTo(p.x,p.y);
-
-    ctx.stroke();
-
-}
-
-function pararDesenho(){
-
-    desenhando = false;
-
-}
-
-function limparAssinatura(){
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-}
-
-async function enviar(){
-
-try{
-
-const assinatura = canvas.toDataURL("image/png");
-
-let dados={
-
-nome:document.getElementById("nome").value,
-matricula:document.getElementById("matricula").value,
-empresa:document.getElementById("empresa").value,
-sala:document.getElementById("sala").value,
-tipo:document.getElementById("tipo").value,
-motivo:document.getElementById("motivo").value,
-
-assinatura:assinatura,
-
-foto:fotoBase64,
-
-latitude:"",
-longitude:"",
-dispositivo:navigator.userAgent
-
-};
-
-const resposta = await fetch(URL_API,{
-
-method:"POST",
-
-headers:{
-"Content-Type":"text/plain;charset=utf-8"
-},
-
-body:JSON.stringify(dados)
-
+    leitor.readAsDataURL(arquivo);
 });
 
-const retorno = await resposta.json();
+// === ENVIAR DADOS ===
+async function enviar() {
+    const btn = document.getElementById("btnEnviar");
+    btn.disabled = true;
+    btn.innerText = "Enviando... Aguarde";
 
-if(retorno.sucesso){
+    try {
+        // Pegar múltiplas salas selecionadas
+        const selectSala = document.getElementById("sala");
+        const salasSelecionadas = Array.from(selectSala.selectedOptions).map(opt => opt.value).join(", ");
 
-alert("Registro salvo com sucesso!");
+        // Pegar múltiplos sistemas (checkboxes)
+        const checkboxesSistema = document.querySelectorAll('#sistema_group input[type="checkbox"]:checked');
+        const sistemasSelecionados = Array.from(checkboxesSistema).map(cb => cb.value).join(", ");
 
-document.getElementById("nome").value="";
-document.getElementById("matricula").value="";
-document.getElementById("empresa").value="";
-document.getElementById("motivo").value="";
-document.getElementById("sala").selectedIndex=0;
-document.getElementById("tipo").selectedIndex=0;
+        // Converter assinaturas (só envia se não estiver em branco - validação básica)
+        const assRespBase64 = canvasResp.toDataURL("image/png");
+        const assSolBase64 = canvasSol.toDataURL("image/png");
 
-limparAssinatura();
+        let dados = {
+            num_controle: document.getElementById("num_controle").value,
+            data: document.getElementById("data_atual").value,
+            hora: document.getElementById("hora_atual").value,
+            
+            nome_responsavel: document.getElementById("nome_responsavel").value,
+            matricula_responsavel: document.getElementById("matricula_responsavel").value,
+            empresa_responsavel: document.getElementById("empresa_responsavel").value,
+            
+            nome_solicitante: document.getElementById("nome_solicitante").value,
+            matricula_solicitante: document.getElementById("matricula_solicitante").value,
+            empresa_solicitante: document.getElementById("empresa_solicitante").value,
+            
+            num_pt: document.getElementById("num_pt").value,
+            num_os: document.getElementById("num_os").value,
+            sistema: sistemasSelecionados,
+            sala: salasSelecionadas,
+            tipo: document.getElementById("tipo").value,
+            motivo: document.getElementById("motivo").value,
 
-}else{
+            foto: fotoBase64,
+            assinatura_responsavel: assRespBase64,
+            assinatura_solicitante: assSolBase64,
+            
+            dispositivo: navigator.userAgent
+        };
 
-alert(retorno.erro);
+        const resposta = await fetch(URL_API, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(dados)
+        });
 
-}
+        const retorno = await resposta.json();
 
-}catch(erro){
+        if (retorno.sucesso) {
+            alert("Registro " + dados.num_controle + " salvo com sucesso!");
+            window.location.reload(); // Recarrega a página para limpar tudo e gerar novo número
+        } else {
+            alert("Erro no servidor: " + retorno.erro);
+        }
 
-console.error(erro);
-
-alert("Erro: " + erro);
-
-}
-
-}
-let fotoBase64 = "";
-
-document
-.getElementById("foto")
-.addEventListener("change", carregarFoto);
-
-function carregarFoto(event){
-
-    const arquivo = event.target.files[0];
-
-    if(!arquivo) return;
-
-    const leitor = new FileReader();
-
-    leitor.onload=function(e){
-
-        fotoBase64 = e.target.result;
-
-        const preview =
-        document.getElementById("previewFoto");
-
-        preview.src = fotoBase64;
-
-        preview.style.display="block";
-
-    };
-
-    leitor.readAsDataURL(arquivo);
-
+    } catch (erro) {
+        console.error(erro);
+        alert("Erro de conexão: " + erro);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Enviar Registro";
+    }
 }
