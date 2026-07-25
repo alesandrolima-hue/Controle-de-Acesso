@@ -140,65 +140,32 @@ async function enviar() {
     btn.innerText = "Enviando... Aguarde";
 
     try {
-        // Pegar múltiplas salas selecionadas
-        const selectSala = document.getElementById("sala");
-        const salasSelecionadas = Array.from(selectSala.selectedOptions).map(opt => opt.value).join(", ");
-
-        // Pegar múltiplos sistemas (checkboxes)
-        const checkboxesSistema = document.querySelectorAll('#sistema_group input[type="checkbox"]:checked');
-        const sistemasSelecionados = Array.from(checkboxesSistema).map(cb => cb.value).join(", ");
-
-        // Converter assinaturas (só envia se não estiver em branco - validação básica)
-        const assRespBase64 = canvasResp.toDataURL("image/png");
-        const assSolBase64 = canvasSol.toDataURL("image/png");
-
-        let dados = {
-            num_controle: document.getElementById("num_controle").value,
-            data: document.getElementById("data_atual").value,
-            hora: document.getElementById("hora_atual").value,
-            
-            nome_responsavel: document.getElementById("nome_responsavel").value,
-            matricula_responsavel: document.getElementById("matricula_responsavel").value,
-            empresa_responsavel: document.getElementById("empresa_responsavel").value,
-            
-            nome_solicitante: document.getElementById("nome_solicitante").value,
-            matricula_solicitante: document.getElementById("matricula_solicitante").value,
-            empresa_solicitante: document.getElementById("empresa_solicitante").value,
-            
-            num_pt: document.getElementById("num_pt").value,
-            num_os: document.getElementById("num_os").value,
-            sistema: sistemasSelecionados,
-            sala: salasSelecionadas,
-            tipo: document.getElementById("tipo").value,
-            motivo: document.getElementById("motivo").value,
-
-            foto: fotoBase64,
-            assinatura_responsavel: assRespBase64,
-            assinatura_solicitante: assSolBase64,
-            
-            dispositivo: navigator.userAgent
-        };
-
         const resposta = await fetch(URL_API, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(dados)
         });
 
-        const retorno = await resposta.json();
+        // 1. Lemos a resposta como TEXTO primeiro
+        const textoBruto = await resposta.text();
 
-        if (retorno.sucesso) {
-            alert("Registro " + dados.num_controle + " salvo com sucesso!");
-            window.location.reload(); // Recarrega a página para limpar tudo e gerar novo número
-        } else {
-            alert("Erro no servidor: " + retorno.erro);
+        try {
+            // 2. Tentamos converter para JSON
+            const retorno = JSON.parse(textoBruto);
+
+            if (retorno.sucesso) {
+                alert("Registro " + dados.num_controle + " salvo com sucesso!");
+                window.location.reload(); // Recarrega a página
+            } else {
+                alert("Erro no servidor Apps Script: " + retorno.erro);
+            }
+
+        } catch (erro) {
+            // 3. Se falhar (por ser HTML), nós mostramos o texto do HTML para descobrir o defeito
+            console.error("Servidor retornou HTML: \n", textoBruto);
+            
+            // Pega um pedaço do HTML do Google (como "<title>Sign in</title>") para ajudar a identificar
+            const pedacoErro = textoBruto.substring(0, 150);
+            alert("Bloqueio do Google. Resposta do servidor: \n\n" + pedacoErro + "\n\n(Veja o console para mais detalhes)");
         }
-
-    } catch (erro) {
-        console.error(erro);
-        alert("Erro de conexão: " + erro);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Enviar Registro";
-    }
 }
