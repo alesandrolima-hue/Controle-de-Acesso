@@ -105,34 +105,53 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// === FOTO COM COMPRESSÃO PARA EVITAR ERRO DE LIMITE ===
+// === FOTO COM COMPRESSÃO (COM TRAVA DE SEGURANÇA) ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
+
+    // 1. Trava o botão de enviar para evitar envio prematuro
+    const btn = document.getElementById("btnEnviar");
+    btn.disabled = true;
+    btn.innerText = "Processando foto... Aguarde";
 
     const leitor = new FileReader();
     leitor.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            const canvasImg = document.createElement("canvas");
-            const MAX_WIDTH = 1200; 
-            let scaleSize = 1;
-            
-            if (img.width > MAX_WIDTH) {
-                scaleSize = MAX_WIDTH / img.width;
+            try {
+                const canvasImg = document.createElement("canvas");
+                const MAX_WIDTH = 1200; 
+                let scaleSize = 1;
+                
+                if (img.width > MAX_WIDTH) {
+                    scaleSize = MAX_WIDTH / img.width;
+                }
+                
+                canvasImg.width = img.width * scaleSize;
+                canvasImg.height = img.height * scaleSize;
+
+                const ctxImg = canvasImg.getContext("2d");
+                ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
+
+                // 2. Transforma em JPEG compactado
+                fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
+
+                // 3. Mostra a miniatura na tela
+                const preview = document.getElementById("previewFoto");
+                preview.src = fotoBase64;
+                preview.style.display = "block";
+            } catch (erroCanvas) {
+                // Se o celular estiver sem memória para o Canvas, usa a original como plano B
+                fotoBase64 = e.target.result;
+                const preview = document.getElementById("previewFoto");
+                preview.src = fotoBase64;
+                preview.style.display = "block";
+            } finally {
+                // 4. Libera o botão de enviar novamente!
+                btn.disabled = false;
+                btn.innerText = "Enviar Registro";
             }
-            
-            canvasImg.width = img.width * scaleSize;
-            canvasImg.height = img.height * scaleSize;
-
-            const ctxImg = canvasImg.getContext("2d");
-            ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
-
-            fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
-
-            const preview = document.getElementById("previewFoto");
-            preview.src = fotoBase64;
-            preview.style.display = "block";
         };
         img.src = e.target.result;
     };
