@@ -97,16 +97,38 @@ function limparCanvas(ctx, canvas) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// === FOTO ===
+// === FOTO (COM COMPRESSÃO AUTOMÁTICA) ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
+
     const leitor = new FileReader();
     leitor.onload = function(e) {
-        fotoBase64 = e.target.result;
-        const preview = document.getElementById("previewFoto");
-        preview.src = fotoBase64;
-        preview.style.display = "block";
+        const img = new Image();
+        img.onload = function() {
+            // Cria um canvas temporário para diminuir a foto
+            const canvasImg = document.createElement("canvas");
+            const MAX_WIDTH = 1200; // Resolução ideal para leitura
+            let scaleSize = 1;
+            
+            if (img.width > MAX_WIDTH) {
+                scaleSize = MAX_WIDTH / img.width;
+            }
+            
+            canvasImg.width = img.width * scaleSize;
+            canvasImg.height = img.height * scaleSize;
+
+            const ctxImg = canvasImg.getContext("2d");
+            ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
+
+            // Exporta a imagem comprimida em JPEG com 70% de qualidade
+            fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
+
+            const preview = document.getElementById("previewFoto");
+            preview.src = fotoBase64;
+            preview.style.display = "block";
+        };
+        img.src = e.target.result;
     };
     leitor.readAsDataURL(arquivo);
 });
