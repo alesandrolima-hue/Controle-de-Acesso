@@ -1,27 +1,22 @@
 // ==========================
-// CONTROLE DE ACESSO - SCRIPT COMPLETO E FINAL
+// CONTROLE DE ACESSO - SCRIPT FINAL E BLINDADO
 // ==========================
 
-// IMPORTANTE: Cole sua URL real do Apps Script aqui
+// IMPORTANTE: Cole sua URL real do Apps Script aqui!
 const URL_API = "https://script.google.com/macros/s/AKfycbx2EeYEjMfLxF0zH9FfMa66szpWgkSIO9z_8fL1ttV6_nOZaxpg-MhacrGywwZdAjN_2g/exec";
 
 let canvasResp, canvasRespCtx;
 let canvasSol, canvasSolCtx;
 
-// Variável global para armazenar a foto com segurança
-window.fotoBase64 = "";
-
 window.onload = function () {
     try {
-        // 1. Gerar Número de Controle, Data e Hora
         gerarDadosControle();
 
-        // 2. Ativar a barra de pesquisa das Salas (Choices.js)
         const selectSala = document.getElementById('sala');
         if(selectSala) {
             new Choices(selectSala, {
                 removeItemButton: true,
-                searchPlaceholderValue: '🔍 Digite para pesquisar a sala...',
+                searchPlaceholderValue: '🔍 Digite para pesquisar...',
                 noResultsText: 'Nenhuma sala encontrada',
                 itemSelectText: 'Toque para selecionar',
                 placeholder: true,
@@ -29,7 +24,6 @@ window.onload = function () {
             });
         }
 
-        // 3. Configurar os dois Canvas de Assinatura
         const setupResp = setupCanvas("assinatura_responsavel");
         canvasResp = setupResp.canvas;
         canvasRespCtx = setupResp.ctx;
@@ -39,14 +33,12 @@ window.onload = function () {
         canvasSolCtx = setupSol.ctx;
 
     } catch (erro) {
-        console.error("Erro ao iniciar a página:", erro);
-        alert("Erro ao carregar os recursos: " + erro.message);
+        console.error(erro);
     }
 };
 
 function gerarDadosControle() {
     const agora = new Date();
-    
     const ano = agora.getFullYear();
     const mes = String(agora.getMonth() + 1).padStart(2, '0');
     const dia = String(agora.getDate()).padStart(2, '0');
@@ -59,7 +51,6 @@ function gerarDadosControle() {
     document.getElementById("num_controle").value = `AC-${ano}${mes}${dia}-${hora}${minuto}${segundo}`;
 }
 
-// === FUNÇÃO REUTILIZÁVEL PARA CANVAS ===
 function setupCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext("2d");
@@ -73,17 +64,10 @@ function setupCanvas(canvasId) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-
         if (e.touches) {
-            return {
-                x: (e.touches[0].clientX - rect.left) * scaleX,
-                y: (e.touches[0].clientY - rect.top) * scaleY
-            };
+            return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
         }
-        return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
-        };
+        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
     }
 
     const iniciar = (e) => { desenhando = true; const p = getPosicao(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
@@ -102,15 +86,10 @@ function setupCanvas(canvasId) {
 }
 
 function limparCanvas(ctx, canvas) {
-    if(ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// Variável global garantida
-window.fotoBase64 = "";
-
-// === FOTO: SOLUÇÃO FINAL (LEITURA DIRETA SEM COMPRESSÃO) ===
+// === FOTO: METODO DIRETO DA TELA ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
@@ -120,36 +99,26 @@ document.getElementById("foto").addEventListener("change", function(event) {
     btn.innerText = "Carregando foto...";
 
     const leitor = new FileReader();
-
-    // Quando o celular terminar de ler o arquivo físico...
     leitor.onload = function(e) {
-        // 1. Pega a foto pura e original imediatamente
-        window.fotoBase64 = e.target.result;
-        
-        // 2. Mostra a miniatura na tela
         const preview = document.getElementById("previewFoto");
-        preview.src = window.fotoBase64;
+        // Joga o código da imagem DIRETO na tag HTML que você vê na tela
+        preview.src = e.target.result;
         preview.style.display = "block";
         
-        // 3. Libera o botão de envio na hora
         btn.disabled = false;
         btn.innerText = "Enviar Registro";
     };
-
-    leitor.onerror = function() {
-        alert("Erro no navegador ao tentar ler a foto.");
-        btn.disabled = false;
-        btn.innerText = "Enviar Registro";
-    };
-
-    // Inicia a leitura do arquivo
     leitor.readAsDataURL(arquivo);
 });
+
 // === ENVIAR DADOS ===
 async function enviar() {
-    // Nova trava com mensagem mais clara lendo a variável global
-    if (!window.fotoBase64 || window.fotoBase64 === "") { 
-        alert("A foto ainda está sendo processada ou você esqueceu de tirar. Aguarde a miniatura aparecer na tela para enviar!"); 
+    const preview = document.getElementById("previewFoto");
+    const fotoData = preview.src;
+
+    // VALIDAÇÃO SUPREMA: Ele checa se a miniatura realmente apareceu na tela
+    if (!fotoData || !fotoData.startsWith("data:image")) { 
+        alert("A foto ainda não apareceu na tela. Tire a foto e aguarde a miniatura aparecer!"); 
         return; 
     }
 
@@ -159,7 +128,7 @@ async function enviar() {
 
     try {
         const selectSala = document.getElementById("sala");
-        const salasSelecionadas = Array.from(selectSala.selectedOptions).map(opt => opt.value).join(", ");
+        const salasSelecionadas = selectSala ? Array.from(selectSala.selectedOptions).map(opt => opt.value).join(", ") : "";
 
         const checkboxesSistema = document.querySelectorAll('#sistema_group input[type="checkbox"]:checked');
         const sistemasSelecionados = Array.from(checkboxesSistema).map(cb => cb.value).join(", ");
@@ -171,26 +140,24 @@ async function enviar() {
             num_controle: document.getElementById("num_controle").value,
             data: document.getElementById("data_atual").value,
             hora: document.getElementById("hora_atual").value,
-            
             nome_responsavel: document.getElementById("nome_responsavel").value,
             matricula_responsavel: document.getElementById("matricula_responsavel").value,
             empresa_responsavel: document.getElementById("empresa_responsavel").value,
-            
             nome_solicitante: document.getElementById("nome_solicitante").value,
             matricula_solicitante: document.getElementById("matricula_solicitante").value,
             empresa_solicitante: document.getElementById("empresa_solicitante").value,
-            
             num_pt: document.getElementById("num_pt").value,
             num_os: document.getElementById("num_os").value,
             sistema: sistemasSelecionados,
             sala: salasSelecionadas,
             tipo: document.getElementById("tipo").value,
             motivo: document.getElementById("motivo").value,
-
-            foto: window.fotoBase64,
+            
+            // Pega a foto diretamente da miniatura da tela!
+            foto: fotoData, 
+            
             assinatura_responsavel: assRespBase64,
             assinatura_solicitante: assSolBase64,
-            
             dispositivo: navigator.userAgent
         };
 
@@ -211,13 +178,10 @@ async function enviar() {
                 alert("Erro no servidor: " + retorno.erro);
             }
         } catch (erroParse) {
-            console.error("Servidor retornou HTML: \n", textoBruto);
             const pedacoErro = textoBruto.substring(0, 150);
-            alert("Bloqueio do Google (Provavelmente você não gerou uma nova URL Deploy). Resposta: \n\n" + pedacoErro);
+            alert("Bloqueio do Google. Resposta: \n\n" + pedacoErro);
         }
-
     } catch (erro) {
-        console.error(erro);
         alert("Erro de conexão: " + erro);
     } finally {
         btn.disabled = false;
