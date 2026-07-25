@@ -162,7 +162,7 @@ document.getElementById("foto").addEventListener("change", function(event) {
 async function enviar() {
     // Adicione esta linha de bloqueio:
     if (fotoBase64 === "") { alert("Por favor, tire a foto do ambiente antes de enviar!"); return; }
-    const btn = document.getElementById("btnEnviar");
+        const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
     btn.innerText = "Enviando... Aguarde";
 
