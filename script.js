@@ -3,7 +3,7 @@
 // ==========================
 
 // IMPORTANTE: Cole sua URL real do Apps Script aqui
-const URL_API = "https://script.google.com/macros/s/AKfycbxGIb39IoL6hSFl-s-QifNKOg1Q1_XRQrMup1LvSh0t4md26KmGZbFGpBCAkfMJ9wpJbg/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycbw9hy9cD3c2-zLO9CkxZqzWR2NxXVeA3oNg18amZkXC6neC4MwhQiHZIDtogW6gA7eVkg/exec";
 
 let canvasResp, canvasRespCtx;
 let canvasSol, canvasSolCtx;
