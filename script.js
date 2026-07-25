@@ -1,13 +1,15 @@
 // ==========================
-// CONTROLE DE ACESSO - SCRIPT COMPLETO
+// CONTROLE DE ACESSO - SCRIPT COMPLETO E FINAL
 // ==========================
 
 // IMPORTANTE: Cole sua URL real do Apps Script aqui
-const URL_API = "https://script.google.com/macros/s/AKfycbyKAQbYe4F8bkwKaUxhzOEsPfLnnhGl0DJXeknah3hKXXK79brf4F437NkmrlvrasZ_Uw/exec";
+const URL_API = "COLOQUE_AQUI_A_SUA_NOVA_URL_DO_APPS_SCRIPT";
 
 let canvasResp, canvasRespCtx;
 let canvasSol, canvasSolCtx;
-let fotoBase64 = "";
+
+// Variável global para armazenar a foto com segurança
+window.fotoBase64 = "";
 
 window.onload = function () {
     try {
@@ -105,9 +107,6 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// Variável global para armazenar a foto com segurança
-window.fotoBase64 = "";
-
 // === FOTO COM COMPRESSÃO OTIMIZADA PARA MOBILE ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
@@ -138,7 +137,7 @@ document.getElementById("foto").addEventListener("change", function(event) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            // Comprime a imagem para JPEG com 60% de qualidade (fica em torno de 200kb)
+            // Comprime a imagem para JPEG com 60% de qualidade
             window.fotoBase64 = canvas.toDataURL("image/jpeg", 0.6);
             
             // Exibe a miniatura na tela
@@ -166,30 +165,15 @@ document.getElementById("foto").addEventListener("change", function(event) {
 
     img.src = objectUrl;
 });
-        // Plano C: Se o objeto de imagem corromper
-        img.onerror = function() {
-             window.fotoBase64 = rawBase64;
-             const preview = document.getElementById("previewFoto");
-             preview.src = window.fotoBase64;
-             preview.style.display = "block";
-             
-             btn.disabled = false;
-             btn.innerText = "Enviar Registro";
-        };
 
-        img.src = rawBase64;
-    };
-    
-    leitor.readAsDataURL(arquivo);
-});
 // === ENVIAR DADOS ===
 async function enviar() {
-    // Nova trava com mensagem mais clara
+    // Nova trava com mensagem mais clara lendo a variável global
     if (!window.fotoBase64 || window.fotoBase64 === "") { 
         alert("A foto ainda está sendo processada ou você esqueceu de tirar. Aguarde a miniatura aparecer na tela para enviar!"); 
         return; 
     }
-    
+
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
     btn.innerText = "Enviando... Aguarde";
@@ -224,14 +208,13 @@ async function enviar() {
             tipo: document.getElementById("tipo").value,
             motivo: document.getElementById("motivo").value,
 
-            foto: window.fotoBase64, // Mudou aqui também para pegar a global!
+            foto: window.fotoBase64,
             assinatura_responsavel: assRespBase64,
             assinatura_solicitante: assSolBase64,
             
             dispositivo: navigator.userAgent
         };
 
-        // ... resto do seu código fetch(URL_API) que já está funcionando ...
         const resposta = await fetch(URL_API, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
