@@ -105,19 +105,25 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// === FOTO COM COMPRESSÃO (COM TRAVA DE SEGURANÇA) ===
+// Garante que a variável seja global desde o início
+window.fotoBase64 = "";
+
+// === FOTO COM COMPRESSÃO (À PROVA DE FALHAS) ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 
-    // 1. Trava o botão de enviar para evitar envio prematuro
+    // Trava o botão para o usuário não clicar antes da hora
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
     btn.innerText = "Processando foto... Aguarde";
 
     const leitor = new FileReader();
+    
     leitor.onload = function(e) {
+        const rawBase64 = e.target.result; // A foto crua, original
         const img = new Image();
+        
         img.onload = function() {
             try {
                 const canvasImg = document.createElement("canvas");
@@ -134,30 +140,41 @@ document.getElementById("foto").addEventListener("change", function(event) {
                 const ctxImg = canvasImg.getContext("2d");
                 ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
 
-                // 2. Transforma em JPEG compactado
-                fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
-
-                // 3. Mostra a miniatura na tela
-                const preview = document.getElementById("previewFoto");
-                preview.src = fotoBase64;
-                preview.style.display = "block";
+                // Plano A: Salva a foto comprimida
+                window.fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
+                
             } catch (erroCanvas) {
-                // Se o celular estiver sem memória para o Canvas, usa a original como plano B
-                fotoBase64 = e.target.result;
-                const preview = document.getElementById("previewFoto");
-                preview.src = fotoBase64;
-                preview.style.display = "block";
+                // Plano B: Se o celular falhar na compressão, usa a foto original
+                console.warn("Falha na compressão, usando original.", erroCanvas);
+                window.fotoBase64 = rawBase64;
+                
             } finally {
-                // 4. Libera o botão de enviar novamente!
+                // Mostra a miniatura e libera o botão
+                const preview = document.getElementById("previewFoto");
+                preview.src = window.fotoBase64;
+                preview.style.display = "block";
+                
                 btn.disabled = false;
                 btn.innerText = "Enviar Registro";
             }
         };
-        img.src = e.target.result;
+
+        // Plano C: Se o objeto de imagem corromper
+        img.onerror = function() {
+             window.fotoBase64 = rawBase64;
+             const preview = document.getElementById("previewFoto");
+             preview.src = window.fotoBase64;
+             preview.style.display = "block";
+             
+             btn.disabled = false;
+             btn.innerText = "Enviar Registro";
+        };
+
+        img.src = rawBase64;
     };
+    
     leitor.readAsDataURL(arquivo);
 });
-
 // === ENVIAR DADOS ===
 async function enviar() {
     // Adicione esta linha de bloqueio:
