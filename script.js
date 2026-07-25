@@ -10,7 +10,20 @@ window.onload = function () {
     // 1. Gerar Número de Controle, Data e Hora
     gerarDadosControle();
 
-    // 2. Configurar os dois Canvas de Assinatura
+    // ==========================================
+    // 2. ATIVAR A BARRA DE PESQUISA DAS SALAS
+    // ==========================================
+    const selectSala = document.getElementById('sala');
+    new Choices(selectSala, {
+        removeItemButton: true, // Permite clicar no 'x' para remover uma sala escolhida
+        searchPlaceholderValue: '🔍 Digite para pesquisar a sala...',
+        noResultsText: 'Nenhuma sala encontrada',
+        itemSelectText: 'Toque para selecionar',
+        placeholder: true,
+        placeholderValue: 'Selecione uma ou mais salas'
+    });
+
+    // 3. Configurar os dois Canvas de Assinatura
     const setupResp = setupCanvas("assinatura_responsavel");
     canvasResp = setupResp.canvas;
     canvasRespCtx = setupResp.ctx;
@@ -19,7 +32,6 @@ window.onload = function () {
     canvasSol = setupSol.canvas;
     canvasSolCtx = setupSol.ctx;
 };
-
 function gerarDadosControle() {
     const agora = new Date();
     
