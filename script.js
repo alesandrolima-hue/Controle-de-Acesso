@@ -105,60 +105,67 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// Garante que a variável seja global desde o início
+// Variável global para armazenar a foto com segurança
 window.fotoBase64 = "";
 
-// === FOTO COM COMPRESSÃO (À PROVA DE FALHAS) ===
+// === FOTO COM COMPRESSÃO OTIMIZADA PARA MOBILE ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 
-    // Trava o botão para o usuário não clicar antes da hora
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
-    btn.innerText = "Processando foto... Aguarde";
+    btn.innerText = "Comprimindo foto... Aguarde";
 
-    const leitor = new FileReader();
-    
-    leitor.onload = function(e) {
-        const rawBase64 = e.target.result; // A foto crua, original
-        const img = new Image();
-        
-        img.onload = function() {
-            try {
-                const canvasImg = document.createElement("canvas");
-                const MAX_WIDTH = 1200; 
-                let scaleSize = 1;
-                
-                if (img.width > MAX_WIDTH) {
-                    scaleSize = MAX_WIDTH / img.width;
-                }
-                
-                canvasImg.width = img.width * scaleSize;
-                canvasImg.height = img.height * scaleSize;
+    // Cria um link virtual direto para o arquivo (super leve para a memória)
+    const objectUrl = URL.createObjectURL(arquivo);
+    const img = new Image();
 
-                const ctxImg = canvasImg.getContext("2d");
-                ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
-
-                // Plano A: Salva a foto comprimida
-                window.fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
-                
-            } catch (erroCanvas) {
-                // Plano B: Se o celular falhar na compressão, usa a foto original
-                console.warn("Falha na compressão, usando original.", erroCanvas);
-                window.fotoBase64 = rawBase64;
-                
-            } finally {
-                // Mostra a miniatura e libera o botão
-                const preview = document.getElementById("previewFoto");
-                preview.src = window.fotoBase64;
-                preview.style.display = "block";
-                
-                btn.disabled = false;
-                btn.innerText = "Enviar Registro";
+    img.onload = function() {
+        try {
+            const canvas = document.createElement("canvas");
+            // Reduzido para 1000px para garantir velocidade e estabilidade em qualquer celular
+            const MAX_WIDTH = 1000; 
+            let scaleSize = 1;
+            
+            if (img.width > MAX_WIDTH) {
+                scaleSize = MAX_WIDTH / img.width;
             }
-        };
+            
+            canvas.width = img.width * scaleSize;
+            canvas.height = img.height * scaleSize;
 
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Comprime a imagem para JPEG com 60% de qualidade (fica em torno de 200kb)
+            window.fotoBase64 = canvas.toDataURL("image/jpeg", 0.6);
+            
+            // Exibe a miniatura na tela
+            const preview = document.getElementById("previewFoto");
+            preview.src = window.fotoBase64;
+            preview.style.display = "block";
+
+        } catch (erro) {
+            alert("Erro de memória no celular ao comprimir a foto. Tente tirar a foto com uma resolução menor.");
+            console.error(erro);
+        } finally {
+            // Limpa o link virtual da memória e libera o botão
+            URL.revokeObjectURL(objectUrl);
+            btn.disabled = false;
+            btn.innerText = "Enviar Registro";
+        }
+    };
+
+    img.onerror = function() {
+        alert("O navegador não conseguiu carregar a foto do sistema.");
+        URL.revokeObjectURL(objectUrl);
+        btn.disabled = false;
+        btn.innerText = "Enviar Registro";
+    };
+
+    img.src = objectUrl;
+});
         // Plano C: Se o objeto de imagem corromper
         img.onerror = function() {
              window.fotoBase64 = rawBase64;
@@ -177,9 +184,9 @@ document.getElementById("foto").addEventListener("change", function(event) {
 });
 // === ENVIAR DADOS ===
 async function enviar() {
-    // Nova validação lendo a variável global
+    // Nova trava com mensagem mais clara
     if (!window.fotoBase64 || window.fotoBase64 === "") { 
-        alert("Por favor, tire a foto do ambiente antes de enviar!"); 
+        alert("A foto ainda está sendo processada ou você esqueceu de tirar. Aguarde a miniatura aparecer na tela para enviar!"); 
         return; 
     }
     
