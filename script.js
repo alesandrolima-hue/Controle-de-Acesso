@@ -107,24 +107,32 @@ function limparCanvas(ctx, canvas) {
     }
 }
 
-// === FOTO COM COMPRESSÃO OTIMIZADA PARA MOBILE ===
+// Variável global para armazenar a foto com segurança
+window.fotoBase64 = "";
+
+// === FOTO: MINIATURA INSTANTÂNEA E COMPRESSÃO EM SEGUNDO PLANO ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
-    btn.innerText = "Comprimindo foto... Aguarde";
+    btn.innerText = "Preparando...";
 
-    // Cria um link virtual direto para o arquivo (super leve para a memória)
+    // 1. MINIATURA INSTANTÂNEA: Mostra a foto na tela em milissegundos!
+    const preview = document.getElementById("previewFoto");
     const objectUrl = URL.createObjectURL(arquivo);
-    const img = new Image();
+    preview.src = objectUrl;
+    preview.style.display = "block";
 
+    // 2. COMPRESSÃO SILENCIOSA
+    const img = new Image();
     img.onload = function() {
         try {
             const canvas = document.createElement("canvas");
-            // Reduzido para 1000px para garantir velocidade e estabilidade em qualquer celular
-            const MAX_WIDTH = 1000; 
+            
+            // Reduzido para 800px. Garante que o Google Drive salve instantaneamente!
+            const MAX_WIDTH = 800; 
             let scaleSize = 1;
             
             if (img.width > MAX_WIDTH) {
@@ -137,30 +145,17 @@ document.getElementById("foto").addEventListener("change", function(event) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            // Comprime a imagem para JPEG com 60% de qualidade
-            window.fotoBase64 = canvas.toDataURL("image/jpeg", 0.6);
-            
-            // Exibe a miniatura na tela
-            const preview = document.getElementById("previewFoto");
-            preview.src = window.fotoBase64;
-            preview.style.display = "block";
+            // Comprime agressivamente para JPEG com 50% de qualidade
+            window.fotoBase64 = canvas.toDataURL("image/jpeg", 0.5);
 
         } catch (erro) {
-            alert("Erro de memória no celular ao comprimir a foto. Tente tirar a foto com uma resolução menor.");
-            console.error(erro);
+            console.error("Erro ao comprimir", erro);
+            alert("Aviso: A foto está pesada demais para este aparelho.");
         } finally {
-            // Limpa o link virtual da memória e libera o botão
-            URL.revokeObjectURL(objectUrl);
+            // Libera o botão rapidinho
             btn.disabled = false;
             btn.innerText = "Enviar Registro";
         }
-    };
-
-    img.onerror = function() {
-        alert("O navegador não conseguiu carregar a foto do sistema.");
-        URL.revokeObjectURL(objectUrl);
-        btn.disabled = false;
-        btn.innerText = "Enviar Registro";
     };
 
     img.src = objectUrl;
