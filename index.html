@@ -1,97 +1,139 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Controle de Acesso</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Controle de Acesso</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="container">
+    <h1>Controle de Acesso</h1>
 
-<h1>Controle de Acesso</h1>
+    <!-- DADOS DO CONTROLE -->
+    <fieldset>
+        <legend>Dados do Controle</legend>
+        <label>Número do Controle</label>
+        <input id="num_controle" type="text" readonly style="background-color: #e9ecef; font-weight: bold;">
 
-<label>Nome</label>
-<input id="nome" type="text">
+        <div class="row">
+            <div class="col">
+                <label>Data</label>
+                <input id="data_atual" type="date" readonly>
+            </div>
+            <div class="col">
+                <label>Hora</label>
+                <input id="hora_atual" type="time" readonly>
+            </div>
+        </div>
+    </fieldset>
 
-<label>Matrícula</label>
-<input id="matricula" type="text">
+    <!-- DADOS DO RESPONSÁVEL -->
+    <fieldset>
+        <legend>Responsável pelo Acesso</legend>
+        <label>Nome</label>
+        <input id="nome_responsavel" type="text" placeholder="Nome completo">
 
-<label>Empresa</label>
-<input id="empresa" type="text">
+        <label>Matrícula ou CPF</label>
+        <input id="matricula_responsavel" type="text">
 
-<label>Sala</label>
+        <label>Empresa</label>
+        <input id="empresa_responsavel" type="text">
+    </fieldset>
 
-<select id="sala">
+    <!-- DADOS DO SOLICITANTE -->
+    <fieldset>
+        <legend>Solicitante</legend>
+        <label>Nome</label>
+        <input id="nome_solicitante" type="text" placeholder="Nome completo">
 
-<option value="">Selecione</option>
+        <label>Matrícula ou CPF</label>
+        <input id="matricula_solicitante" type="text">
 
-<option>11B2</option>
-<option>13B2</option>
-<option>15B2</option>
-<option>17B2</option>
-<option>19B2</option>
+        <label>Empresa</label>
+        <input id="empresa_solicitante" type="text">
+    </fieldset>
 
-</select>
+    <!-- DADOS DO SERVIÇO -->
+    <fieldset>
+        <legend>Dados do Serviço</legend>
+        <label>Número da PT/LTR/AR</label>
+        <input id="num_pt" type="text">
 
-<label>Tipo</label>
+        <label>Número da Ordem de Serviço</label>
+        <input id="num_os" type="text">
 
-<select id="tipo">
+        <label>Sistema (Selecione um ou mais)</label>
+        <div class="checkbox-group" id="sistema_group">
+            <label><input type="checkbox" value="Elétrica"> Elétrica</label>
+            <label><input type="checkbox" value="HVAC"> HVAC</label>
+            <label><input type="checkbox" value="Civil"> Civil</label>
+            <label><input type="checkbox" value="Automação"> Automação</label>
+            <label><input type="checkbox" value="TI"> TI</label>
+            <label><input type="checkbox" value="SDAI"> SDAI</label>
+            <label><input type="checkbox" value="FM-200"> FM-200</label>
+        </div>
+    </fieldset>
 
-<option>Entrada</option>
+    <!-- LOCAL E MOTIVO -->
+    <fieldset>
+        <legend>Local e Motivo</legend>
+        <label>Tipo</label>
+        <select id="tipo">
+            <option value="">Selecione...</option>
+            <option value="Entrada">Entrada</option>
+            <option value="Saída">Saída</option>
+        </select>
 
-<option>Saída</option>
+        <label>Sala (Segure CTRL para selecionar várias)</label>
+        <!-- Coloquei algumas de exemplo, você pode colar toda a sua lista gigante aqui dentro -->
+        <select id="sala" multiple size="6">
+            <optgroup label="Salas Satélite Torre A">
+                <option value="Sala Satélite 19-A1">Sala Satélite 19-A1</option>
+                <option value="Sala Satélite 17-A1">Sala Satélite 17-A1</option>
+                <!-- Cole o restante das salas da Torre A aqui -->
+            </optgroup>
+            <optgroup label="Salas Satélite Torre B">
+                <option value="Sala Satélite 13-B1">Sala Satélite 13-B1</option>
+                <option value="Sala Satélite 11-B1">Sala Satélite 11-B1</option>
+                <!-- Cole o restante das salas da Torre B aqui -->
+            </optgroup>
+            <optgroup label="Salas de Telecomunicações">
+                <option value="Sala de Telecomunicações - 20-A1">Sala de Telecomunicações - 20-A1</option>
+                <option value="Sala de Telecomunicações - 19-A1">Sala de Telecomunicações - 19-A1</option>
+                <!-- Cole o restante aqui -->
+            </optgroup>
+            <optgroup label="Salas de Elétrica e Baterias">
+                <option value="Sala de Elétrica - 20-A1">Sala de Elétrica - 20-A1</option>
+                <option value="Sala de Baterias - 20-A1">Sala de Baterias - 20-A1</option>
+                <!-- Cole o restante aqui -->
+            </optgroup>
+        </select>
 
-</select>
+        <label>Motivo</label>
+        <textarea id="motivo" rows="3"></textarea>
+    </fieldset>
 
-<label>Motivo</label>
+    <!-- EVIDÊNCIAS -->
+    <fieldset>
+        <legend>Evidências e Assinaturas</legend>
+        <label>Foto do Ambiente</label>
+        <input type="file" id="foto" accept="image/*" capture="environment">
+        <img id="previewFoto" style="display:none; max-width:100%; margin-top:10px; border-radius:8px;">  
+        
+        <label>Assinatura do Responsável</label>
+        <canvas id="assinatura_responsavel" width="450" height="180"></canvas>
+        <button type="button" class="btn-limpar" onclick="limparCanvas(canvasRespCtx, canvasResp)">Limpar Assinatura Responsável</button>
 
-<textarea id="motivo"></textarea>
+        <label>Assinatura do Solicitante</label>
+        <canvas id="assinatura_solicitante" width="450" height="180"></canvas>
+        <button type="button" class="btn-limpar" onclick="limparCanvas(canvasSolCtx, canvasSol)">Limpar Assinatura Solicitante</button>
+    </fieldset>
 
-<label>Foto do Ambiente</label>
-
-<input
-    type="file"
-    id="foto"
-    accept="image/*"
-    capture="environment">
-
-<br><br>
-
-<img
-    id="previewFoto"
-    style="display:none;
-           max-width:100%;
-           border-radius:8px;
-           border:1px solid #ccc;">  
-  
-<label>Assinatura</label>
-
-<canvas id="assinatura" width="450" height="180"></canvas>
-
-<br><br>
-
-<button type="button" onclick="limparAssinatura()">
-Limpar Assinatura
-</button>
-
-<br><br>
-
-<button onclick="enviar()">
-Enviar
-</button>  
-  
+    <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">Enviar Registro</button>  
 </div>
 
 <script src="script.js"></script>
-
 </body>
-
 </html>
