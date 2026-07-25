@@ -1,41 +1,50 @@
-// URL da sua API do Google Apps Script
-const URL_API = "https://script.google.com/macros/s/AKfycby5qdU7R99OSDIzkeh30juFI87o5QZkOGepmJGPE0sxCN2XjdI4JAaCsyHytAOG-KjNRw/exec";
+// ==========================
+// CONTROLE DE ACESSO - SCRIPT COMPLETO
+// ==========================
 
-// Variáveis para as assinaturas
+// IMPORTANTE: Cole sua URL real do Apps Script aqui
+const URL_API = "COLOQUE_AQUI_A_SUA_NOVA_URL_DO_APPS_SCRIPT";
+
 let canvasResp, canvasRespCtx;
 let canvasSol, canvasSolCtx;
 let fotoBase64 = "";
 
 window.onload = function () {
-    // 1. Gerar Número de Controle, Data e Hora
-    gerarDadosControle();
+    try {
+        // 1. Gerar Número de Controle, Data e Hora
+        gerarDadosControle();
 
-    // ==========================================
-    // 2. ATIVAR A BARRA DE PESQUISA DAS SALAS
-    // ==========================================
-    const selectSala = document.getElementById('sala');
-    new Choices(selectSala, {
-        removeItemButton: true, // Permite clicar no 'x' para remover uma sala escolhida
-        searchPlaceholderValue: '🔍 Digite para pesquisar a sala...',
-        noResultsText: 'Nenhuma sala encontrada',
-        itemSelectText: 'Toque para selecionar',
-        placeholder: true,
-        placeholderValue: 'Selecione uma ou mais salas'
-    });
+        // 2. Ativar a barra de pesquisa das Salas (Choices.js)
+        const selectSala = document.getElementById('sala');
+        if(selectSala) {
+            new Choices(selectSala, {
+                removeItemButton: true,
+                searchPlaceholderValue: '🔍 Digite para pesquisar a sala...',
+                noResultsText: 'Nenhuma sala encontrada',
+                itemSelectText: 'Toque para selecionar',
+                placeholder: true,
+                placeholderValue: 'Selecione uma ou mais salas'
+            });
+        }
 
-    // 3. Configurar os dois Canvas de Assinatura
-    const setupResp = setupCanvas("assinatura_responsavel");
-    canvasResp = setupResp.canvas;
-    canvasRespCtx = setupResp.ctx;
+        // 3. Configurar os dois Canvas de Assinatura
+        const setupResp = setupCanvas("assinatura_responsavel");
+        canvasResp = setupResp.canvas;
+        canvasRespCtx = setupResp.ctx;
 
-    const setupSol = setupCanvas("assinatura_solicitante");
-    canvasSol = setupSol.canvas;
-    canvasSolCtx = setupSol.ctx;
+        const setupSol = setupCanvas("assinatura_solicitante");
+        canvasSol = setupSol.canvas;
+        canvasSolCtx = setupSol.ctx;
+
+    } catch (erro) {
+        console.error("Erro ao iniciar a página:", erro);
+        alert("Erro ao carregar os recursos: " + erro.message);
+    }
 };
+
 function gerarDadosControle() {
     const agora = new Date();
     
-    // Formatar Data (YYYY-MM-DD) e Hora (HH:MM) para os inputs readonly
     const ano = agora.getFullYear();
     const mes = String(agora.getMonth() + 1).padStart(2, '0');
     const dia = String(agora.getDate()).padStart(2, '0');
@@ -45,8 +54,6 @@ function gerarDadosControle() {
 
     document.getElementById("data_atual").value = `${ano}-${mes}-${dia}`;
     document.getElementById("hora_atual").value = `${hora}:${minuto}`;
-
-    // Gerar Número de Controle (Ex: AC-20231025-143022)
     document.getElementById("num_controle").value = `AC-${ano}${mes}${dia}-${hora}${minuto}${segundo}`;
 }
 
@@ -62,7 +69,6 @@ function setupCanvas(canvasId) {
 
     function getPosicao(e) {
         const rect = canvas.getBoundingClientRect();
-        // Escala caso o CSS redimensione o canvas
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
 
@@ -94,10 +100,12 @@ function setupCanvas(canvasId) {
 }
 
 function limparCanvas(ctx, canvas) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if(ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 }
 
-// === FOTO (COM COMPRESSÃO AUTOMÁTICA) ===
+// === FOTO COM COMPRESSÃO PARA EVITAR ERRO DE LIMITE ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
@@ -106,9 +114,8 @@ document.getElementById("foto").addEventListener("change", function(event) {
     leitor.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            // Cria um canvas temporário para diminuir a foto
             const canvasImg = document.createElement("canvas");
-            const MAX_WIDTH = 1200; // Resolução ideal para leitura
+            const MAX_WIDTH = 1200; 
             let scaleSize = 1;
             
             if (img.width > MAX_WIDTH) {
@@ -121,7 +128,6 @@ document.getElementById("foto").addEventListener("change", function(event) {
             const ctxImg = canvasImg.getContext("2d");
             ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
 
-            // Exporta a imagem comprimida em JPEG com 70% de qualidade
             fotoBase64 = canvasImg.toDataURL("image/jpeg", 0.7);
 
             const preview = document.getElementById("previewFoto");
@@ -140,32 +146,69 @@ async function enviar() {
     btn.innerText = "Enviando... Aguarde";
 
     try {
+        const selectSala = document.getElementById("sala");
+        const salasSelecionadas = Array.from(selectSala.selectedOptions).map(opt => opt.value).join(", ");
+
+        const checkboxesSistema = document.querySelectorAll('#sistema_group input[type="checkbox"]:checked');
+        const sistemasSelecionados = Array.from(checkboxesSistema).map(cb => cb.value).join(", ");
+
+        const assRespBase64 = canvasResp.toDataURL("image/png");
+        const assSolBase64 = canvasSol.toDataURL("image/png");
+
+        let dados = {
+            num_controle: document.getElementById("num_controle").value,
+            data: document.getElementById("data_atual").value,
+            hora: document.getElementById("hora_atual").value,
+            
+            nome_responsavel: document.getElementById("nome_responsavel").value,
+            matricula_responsavel: document.getElementById("matricula_responsavel").value,
+            empresa_responsavel: document.getElementById("empresa_responsavel").value,
+            
+            nome_solicitante: document.getElementById("nome_solicitante").value,
+            matricula_solicitante: document.getElementById("matricula_solicitante").value,
+            empresa_solicitante: document.getElementById("empresa_solicitante").value,
+            
+            num_pt: document.getElementById("num_pt").value,
+            num_os: document.getElementById("num_os").value,
+            sistema: sistemasSelecionados,
+            sala: salasSelecionadas,
+            tipo: document.getElementById("tipo").value,
+            motivo: document.getElementById("motivo").value,
+
+            foto: fotoBase64,
+            assinatura_responsavel: assRespBase64,
+            assinatura_solicitante: assSolBase64,
+            
+            dispositivo: navigator.userAgent
+        };
+
         const resposta = await fetch(URL_API, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(dados)
         });
 
-        // 1. Lemos a resposta como TEXTO primeiro
         const textoBruto = await resposta.text();
 
         try {
-            // 2. Tentamos converter para JSON
             const retorno = JSON.parse(textoBruto);
-
             if (retorno.sucesso) {
                 alert("Registro " + dados.num_controle + " salvo com sucesso!");
-                window.location.reload(); // Recarrega a página
+                window.location.reload(); 
             } else {
-                alert("Erro no servidor Apps Script: " + retorno.erro);
+                alert("Erro no servidor: " + retorno.erro);
             }
-
-        } catch (erro) {
-            // 3. Se falhar (por ser HTML), nós mostramos o texto do HTML para descobrir o defeito
+        } catch (erroParse) {
             console.error("Servidor retornou HTML: \n", textoBruto);
-            
-            // Pega um pedaço do HTML do Google (como "<title>Sign in</title>") para ajudar a identificar
             const pedacoErro = textoBruto.substring(0, 150);
-            alert("Bloqueio do Google. Resposta do servidor: \n\n" + pedacoErro + "\n\n(Veja o console para mais detalhes)");
+            alert("Bloqueio do Google (Provavelmente você não gerou uma nova URL Deploy). Resposta: \n\n" + pedacoErro);
         }
+
+    } catch (erro) {
+        console.error(erro);
+        alert("Erro de conexão: " + erro);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Enviar Registro";
+    }
 }
