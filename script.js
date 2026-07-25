@@ -1,8 +1,3 @@
-// ==========================
-// CONTROLE DE ACESSO - SCRIPT FINAL E BLINDADO
-// ==========================
-
-// IMPORTANTE: Cole sua URL real do Apps Script aqui!
 const URL_API = "https://script.google.com/macros/s/AKfycbx2EeYEjMfLxF0zH9FfMa66szpWgkSIO9z_8fL1ttV6_nOZaxpg-MhacrGywwZdAjN_2g/exec";
 
 let canvasResp, canvasRespCtx;
@@ -89,26 +84,48 @@ function limparCanvas(ctx, canvas) {
     if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// === FOTO: METODO DIRETO DA TELA ===
+// === COMPRESSÃO DE FOTO SUPER LEVE ===
 document.getElementById("foto").addEventListener("change", function(event) {
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 
     const btn = document.getElementById("btnEnviar");
     btn.disabled = true;
-    btn.innerText = "Carregando foto...";
+    btn.innerText = "Processando foto...";
 
-    const leitor = new FileReader();
-    leitor.onload = function(e) {
-        const preview = document.getElementById("previewFoto");
-        // Joga o código da imagem DIRETO na tag HTML que você vê na tela
-        preview.src = e.target.result;
-        preview.style.display = "block";
-        
-        btn.disabled = false;
-        btn.innerText = "Enviar Registro";
+    const objectUrl = URL.createObjectURL(arquivo);
+    const img = new Image();
+
+    img.onload = function() {
+        try {
+            const canvas = document.createElement("canvas");
+            const MAX_WIDTH = 800; // Tamanho ideal para relatórios corporativos
+            let scaleSize = MAX_WIDTH / img.width;
+            if (scaleSize > 1) scaleSize = 1;
+
+            canvas.width = img.width * scaleSize;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Gera a imagem comprimida
+            const base64Comprimido = canvas.toDataURL("image/jpeg", 0.6);
+            
+            const preview = document.getElementById("previewFoto");
+            preview.src = base64Comprimido;
+            preview.style.display = "block";
+            
+        } catch (erro) {
+            alert("Erro ao processar imagem no celular.");
+        } finally {
+            URL.revokeObjectURL(objectUrl);
+            btn.disabled = false;
+            btn.innerText = "Enviar Registro";
+        }
     };
-    leitor.readAsDataURL(arquivo);
+
+    img.src = objectUrl;
 });
 
 // === ENVIAR DADOS ===
@@ -116,9 +133,9 @@ async function enviar() {
     const preview = document.getElementById("previewFoto");
     const fotoData = preview.src;
 
-    // VALIDAÇÃO SUPREMA: Ele checa se a miniatura realmente apareceu na tela
-    if (!fotoData || !fotoData.startsWith("data:image")) { 
-        alert("A foto ainda não apareceu na tela. Tire a foto e aguarde a miniatura aparecer!"); 
+    // Se o SRC da imagem estiver vazio ou oculto, a foto não foi processada
+    if (!fotoData || fotoData === "" || fotoData.indexOf("data:image") === -1) { 
+        alert("A foto ainda não apareceu na tela. Tire a foto e aguarde a miniatura aparecer para enviar!"); 
         return; 
     }
 
@@ -152,10 +169,7 @@ async function enviar() {
             sala: salasSelecionadas,
             tipo: document.getElementById("tipo").value,
             motivo: document.getElementById("motivo").value,
-            
-            // Pega a foto diretamente da miniatura da tela!
             foto: fotoData, 
-            
             assinatura_responsavel: assRespBase64,
             assinatura_solicitante: assSolBase64,
             dispositivo: navigator.userAgent
